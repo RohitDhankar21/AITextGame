@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Text Adventure</title>
+</head>
+<body>
+    <h1>AI Text-Based Adventure Game</h1>
+    <button id="startButton">Start</button>
+    <div id="chatContainer"></div>
+    <form id="chatForm" action="/process_input" method="post">
+        <input type="text" id="user_input" name="user_input" placeholder="Your message" required>
+        <input type="submit" id="submitBtn" class="submitBtnC" value="send">
+    </form>
+    <script>
+        document.getElementById('startButton').addEventListener('click', async function () {
+            const chatContainer = document.getElementById('chatContainer');
+            const response = await fetch('/start_ai_program', {
+                method: 'GET',
+            });
+            const result = await response.text();
+            appendMessage(chatContainer, result, 'ai-text');
+        });
+
+        document.getElementById('chatForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const userInput = document.getElementById('user_input').value;
+            const chatContainer = document.getElementById('chatContainer');
+            appendMessage(chatContainer, userInput, 'user-text');
+            const response = await fetch('/process_input', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `user_input=${encodeURIComponent(userInput)}`,
+            });
+            const result = await response.text();
+            // Clear input field after submitting
+            document.getElementById('user_input').value = '';
+            // Display AI response with typewriter effect
+            await typeWriterEffect(chatContainer, result, 'ai-text');
+        });
+
+        async function typeWriterEffect(container, message, className) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = className;
+            container.appendChild(messageDiv);
+            for (let i = 0; i < message.length; i++) {
+                await sleep(25); // Adjust the delay as needed
+                messageDiv.textContent += message.charAt(i);
+            }
+            // Add a line of space after every dialogue
+            messageDiv.style.marginBottom = '5px';
+        }
+
+        function appendMessage(container, message, className) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = className;
+            messageDiv.textContent = message;
+            // Add a line of space after every dialogue
+            messageDiv.style.marginBottom = '5px';
+            // Ensure proper text color inheritance for user messages
+            if (className === 'user-text') {
+                messageDiv.style.color = '#FC7C04';
+            }
+            container.appendChild(messageDiv);
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+    </script>
+</body>
+</html>
